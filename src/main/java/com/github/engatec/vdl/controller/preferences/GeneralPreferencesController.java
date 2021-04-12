@@ -1,45 +1,40 @@
 package com.github.engatec.vdl.controller.preferences;
 
-import java.io.File;
 import java.util.ResourceBundle;
 
-import com.github.engatec.vdl.controller.StageAwareController;
+import com.github.engatec.fxcontrols.FxDirectoryChooser;
 import com.github.engatec.vdl.core.ApplicationContext;
+import com.github.engatec.vdl.core.preferences.ConfigRegistry;
 import com.github.engatec.vdl.core.preferences.data.AutodownloadFormat;
 import com.github.engatec.vdl.core.preferences.data.PredefinedFormatCreator;
-import com.github.engatec.vdl.core.preferences.propertyholder.GeneralPropertyHolder;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AlwaysAskDownloadPathPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AutoDownloadFormatPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AutoDownloadPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AutoSearchFromClipboardPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.DownloadPathPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.SkipDownloadableDetailsSearchPref;
 import com.github.engatec.vdl.ui.Icons;
-import com.github.engatec.vdl.util.Svg;
-import javafx.beans.property.BooleanProperty;
+import com.github.engatec.vdl.validation.InputForm;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Group;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.VBox;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Stage;
-import javafx.util.Duration;
 import org.apache.commons.lang3.StringUtils;
 
-public class GeneralPreferencesController extends StageAwareController {
-
-    private GeneralPropertyHolder propertyHolder;
+public class GeneralPreferencesController extends ScrollPane implements InputForm {
 
     private final ToggleGroup downloadPathRadioGroup = new ToggleGroup();
     @FXML private RadioButton downloadPathRadioBtn;
     @FXML private RadioButton askPathRadioBtn;
-    @FXML private TextField downloadPathTextField;
-    @FXML private Button chooseDownloadPathBtn;
+    @FXML private FxDirectoryChooser downloadPathDirectoryChooser;
 
     @FXML private CheckBox autoSearchFromClipboardCheckBox;
 
@@ -48,14 +43,6 @@ public class GeneralPreferencesController extends StageAwareController {
     @FXML private ComboBox<AutodownloadFormat> autodownloadFormatComboBox;
     @FXML private TextField autodownloadFormatTextField;
     @FXML private CheckBox skipDownloadableDetailsSearchCheckBox;
-
-    private GeneralPreferencesController() {
-    }
-
-    public GeneralPreferencesController(Stage stage, GeneralPropertyHolder propertyHolder) {
-        super(stage);
-        this.propertyHolder = propertyHolder;
-    }
 
     @FXML
     public void initialize() {
@@ -66,34 +53,21 @@ public class GeneralPreferencesController extends StageAwareController {
     }
 
     private void bindPropertyHolder() {
-        askPathRadioBtn.selectedProperty().bindBidirectional(propertyHolder.alwaysAskPathProperty());
-        downloadPathTextField.textProperty().bindBidirectional(propertyHolder.downloadPathProperty());
+        askPathRadioBtn.selectedProperty().bindBidirectional(ConfigRegistry.get(AlwaysAskDownloadPathPref.class).getProperty());
+        downloadPathDirectoryChooser.pathProperty().bindBidirectional(ConfigRegistry.get(DownloadPathPref.class).getProperty());
 
-        autoSearchFromClipboardCheckBox.selectedProperty().bindBidirectional(propertyHolder.autoSearchFromClipboardProperty());
+        autoSearchFromClipboardCheckBox.selectedProperty().bindBidirectional(ConfigRegistry.get(AutoSearchFromClipboardPref.class).getProperty());
 
-        autodownloadCheckBox.selectedProperty().bindBidirectional(propertyHolder.autoDownloadProperty());
-        autodownloadFormatTextField.textProperty().bindBidirectional(propertyHolder.autodownloadFormatProperty());
-        skipDownloadableDetailsSearchCheckBox.selectedProperty().bindBidirectional(propertyHolder.skipDownloadableDetailsSearchProperty());
-    }
-
-    private void handleDownloadPathChoose(ActionEvent event) {
-        var directoryChooser = new DirectoryChooser();
-        File selectedDirectory = directoryChooser.showDialog(stage);
-        if (selectedDirectory != null) {
-            String path = selectedDirectory.getAbsolutePath();
-            downloadPathTextField.setText(path);
-        }
-        event.consume();
+        autodownloadCheckBox.selectedProperty().bindBidirectional(ConfigRegistry.get(AutoDownloadPref.class).getProperty());
+        autodownloadFormatTextField.textProperty().bindBidirectional(ConfigRegistry.get(AutoDownloadFormatPref.class).getProperty());
+        skipDownloadableDetailsSearchCheckBox.selectedProperty().bindBidirectional(ConfigRegistry.get(SkipDownloadableDetailsSearchPref.class).getProperty());
     }
 
     private void initDownloadPathSettings() {
-        chooseDownloadPathBtn.setOnAction(this::handleDownloadPathChoose);
-
         downloadPathRadioBtn.setToggleGroup(downloadPathRadioGroup);
         askPathRadioBtn.setToggleGroup(downloadPathRadioGroup);
-        BooleanProperty downloadPathRadioBtnSelectedProperty = downloadPathRadioBtn.selectedProperty();
-        downloadPathTextField.disableProperty().bind(downloadPathRadioBtnSelectedProperty.not());
-        chooseDownloadPathBtn.disableProperty().bind(downloadPathRadioBtnSelectedProperty.not());
+        downloadPathDirectoryChooser.setButtonText(ApplicationContext.INSTANCE.getResourceBundle().getString("button.directorychoose"));
+        downloadPathDirectoryChooser.disableProperty().bind(downloadPathRadioBtn.selectedProperty().not());
         downloadPathRadioBtn.setSelected(true); // Set default value to trigger ToggleGroup. It will be overriden during PropertyHolder binding
     }
 
@@ -111,7 +85,7 @@ public class GeneralPreferencesController extends StageAwareController {
                 new AutodownloadFormat(resourceBundle.getString("preferences.general.data.autodownload.format.nothigher480p"), PredefinedFormatCreator.create("480"))
         ));
 
-        String formatFromPreferences = propertyHolder.autodownloadFormatProperty().getValueSafe();
+        String formatFromPreferences = ConfigRegistry.get(AutoDownloadFormatPref.class).getProperty().getValueSafe();
         ObservableList<AutodownloadFormat> comboboxItems = autodownloadFormatComboBox.getItems();
         String customFormatValue = comboboxItems.stream()
                 .filter(it -> it.getValue().equals(formatFromPreferences))
@@ -121,7 +95,9 @@ public class GeneralPreferencesController extends StageAwareController {
         comboboxItems.add(new AutodownloadFormat(resourceBundle.getString("preferences.general.data.autodownload.format.custom"), customFormatValue));
 
         SingleSelectionModel<AutodownloadFormat> selectionModel = autodownloadFormatComboBox.getSelectionModel();
-        selectionModel.selectedItemProperty().addListener((observable, oldValue, newValue) -> propertyHolder.setAutodownloadFormat(newValue.getValue()));
+        selectionModel.selectedItemProperty().addListener((observable, oldValue, newValue) ->
+                ConfigRegistry.get(AutoDownloadFormatPref.class).setValue(newValue.getValue())
+        );
         autodownloadFormatTextField.visibleProperty().bind(selectionModel.selectedIndexProperty().isEqualTo(comboboxItems.size() - 1));
 
         int itemToSelect = 0;
@@ -135,13 +111,12 @@ public class GeneralPreferencesController extends StageAwareController {
         }
         selectionModel.select(itemToSelect);
 
-        Group infoIcon = Icons.info();
-        Svg.scale(infoIcon, 0.8);
-        Tooltip tooltip = new Tooltip(resourceBundle.getString("preferences.general.autodownload.checkbox.skipdetailssearch.tooltip"));
-        tooltip.setShowDelay(Duration.ZERO);
-        tooltip.setShowDuration(Duration.INDEFINITE);
-        Tooltip.install(infoIcon, tooltip);
-        skipDownloadableDetailsSearchCheckBox.setGraphic(infoIcon);
+        skipDownloadableDetailsSearchCheckBox.setGraphic(Icons.infoWithTooltip("preferences.general.autodownload.checkbox.skipdetailssearch.tooltip"));
         skipDownloadableDetailsSearchCheckBox.setContentDisplay(ContentDisplay.RIGHT);
+    }
+
+    @Override
+    public boolean hasErrors() {
+        return false;
     }
 }

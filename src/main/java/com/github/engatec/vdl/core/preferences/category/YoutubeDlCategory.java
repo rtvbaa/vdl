@@ -1,19 +1,11 @@
 package com.github.engatec.vdl.core.preferences.category;
 
-import com.github.engatec.vdl.controller.preferences.YoutubedlPreferencesController;
-import com.github.engatec.vdl.core.UiComponent;
-import com.github.engatec.vdl.core.UiManager;
-import com.github.engatec.vdl.core.preferences.ConfigManager;
-import com.github.engatec.vdl.core.preferences.propertyholder.YoutubedlPropertyHolder;
-import com.github.engatec.vdl.model.preferences.youtubedl.ConfigFilePathConfigItem;
-import com.github.engatec.vdl.model.preferences.youtubedl.NoMTimeConfigItem;
-import com.github.engatec.vdl.model.preferences.youtubedl.UseConfigFileConfigItem;
+import com.github.engatec.vdl.controller.preferences.youtubedl.YoutubedlPreferencesController;
+import com.github.engatec.vdl.ui.component.preferences.YoutubeDlPreferencesComponent;
 import javafx.scene.Node;
 import javafx.stage.Stage;
 
 public class YoutubeDlCategory extends Category {
-
-    private YoutubedlPropertyHolder propertyHolder;
 
     public YoutubeDlCategory(String title) {
         super(title);
@@ -22,30 +14,17 @@ public class YoutubeDlCategory extends Category {
     @Override
     public Node buildCategoryUi(Stage stage) {
         if (super.node == null) {
-            readPreferences();
-            super.node = UiManager.loadComponent(UiComponent.PREFERENCES_YOUTUBE_DL, param -> new YoutubedlPreferencesController(stage, propertyHolder));
+            super.node = new YoutubeDlPreferencesComponent(stage).load();
         }
         return node;
     }
 
     @Override
-    public void readPreferences() {
-        ConfigManager config = ConfigManager.INSTANCE;
-        propertyHolder = new YoutubedlPropertyHolder();
-        propertyHolder.setNoMTime(config.getValue(new NoMTimeConfigItem()));
-        propertyHolder.setUseConfigFile(config.getValue(new UseConfigFileConfigItem()));
-        propertyHolder.setConfigFilePath(config.getValue(new ConfigFilePathConfigItem()));
-    }
-
-    @Override
-    public void savePreferences() {
-        if (propertyHolder == null) {
-            return;
+    public boolean hasErrors() {
+        if (super.node == null) {
+            return false;
         }
 
-        ConfigManager config = ConfigManager.INSTANCE;
-        config.setValue(new NoMTimeConfigItem(), propertyHolder.isNoMTime());
-        config.setValue(new UseConfigFileConfigItem(), propertyHolder.isUseConfigFile());
-        config.setValue(new ConfigFilePathConfigItem(), propertyHolder.getConfigFilePath());
+        return ((YoutubedlPreferencesController) node).hasErrors();
     }
 }

@@ -3,7 +3,7 @@
 }
 
 .control-btn {
-    -fx-pref-width: 80;
+    -fx-min-width: 70;
 }
 
 .grid-header-label {
@@ -21,4 +21,20 @@
 
 .no-border {
     -fx-box-border: transparent;
+}
+
+.scroll-pane:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.table-view:focused {
+    -fx-background-color: -fx-box-border, -fx-control-inner-background;
+    -fx-background-insets: 0, 1;
+    -fx-padding: 1;
+}
+
+.preferences-category-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 12;
 }

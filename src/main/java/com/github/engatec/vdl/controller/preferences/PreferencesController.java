@@ -5,9 +5,12 @@ import java.util.ResourceBundle;
 
 import com.github.engatec.vdl.controller.StageAwareController;
 import com.github.engatec.vdl.core.ApplicationContext;
+import com.github.engatec.vdl.core.preferences.ConfigRegistry;
 import com.github.engatec.vdl.core.preferences.category.Category;
 import com.github.engatec.vdl.core.preferences.category.GeneralCategory;
 import com.github.engatec.vdl.core.preferences.category.YoutubeDlCategory;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AutoDownloadFormatPref;
+import com.github.engatec.vdl.model.preferences.wrapper.general.AutoDownloadPref;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -17,6 +20,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 public class PreferencesController extends StageAwareController {
 
@@ -37,7 +41,8 @@ public class PreferencesController extends StageAwareController {
 
     @FXML
     public void initialize() {
-        this.stage.setTitle(resourceBundle.getString("preferences.title"));
+        stage.setTitle(resourceBundle.getString("preferences.title"));
+        stage.setOnCloseRequest(event -> discardChanges());
 
         okBtn.setOnAction(this::handleOkBtnClick);
         cancelBtn.setOnAction(this::handleCancelBtnClick);
@@ -54,7 +59,7 @@ public class PreferencesController extends StageAwareController {
             Node categoryUi = newValue.getValue().buildCategoryUi(stage);
             preferencesScrollPane.setContent(categoryUi);
         });
-        selectionModel.select(0);
+        selectionModel.selectFirst();
     }
 
     private TreeItem<Category> createRoot() {
@@ -73,19 +78,43 @@ public class PreferencesController extends StageAwareController {
     }
 
     private void handleCancelBtnClick(ActionEvent event) {
+        discardChanges();
         stage.close();
         event.consume();
     }
 
+    private void discardChanges() {
+        ConfigRegistry.restorePreviousValues();
+    }
+
     private void handleOkBtnClick(ActionEvent event) {
+        for (TreeItem<Category> item : preferencesCategoryTreeView.getRoot().getChildren()) {
+            if (item.getValue().hasErrors()) {
+                preferencesCategoryTreeView.getSelectionModel().select(item);
+                event.consume();
+                return;
+            }
+        }
+
+        fixState();
         saveSettings();
         stage.close();
         event.consume();
     }
 
-    private void saveSettings() {
-        for (TreeItem<Category> child : preferencesCategoryTreeView.getRoot().getChildren()) {
-            child.getValue().savePreferences();
+    private void fixState() {
+        AutoDownloadFormatPref autoDownloadFormat = ConfigRegistry.get(AutoDownloadFormatPref.class);
+        if (StringUtils.isBlank(autoDownloadFormat.getValue())) {
+            autoDownloadFormat.setValue(StringUtils.EMPTY); // Reset the field if user entered multiple space characters
         }
+
+        AutoDownloadPref autoDownload = ConfigRegistry.get(AutoDownloadPref.class);
+        if (autoDownload.getValue() && StringUtils.isBlank(autoDownloadFormat.getValue())) {
+            autoDownload.setValue(false);
+        }
+    }
+
+    private void saveSettings() {
+        ConfigRegistry.saveAll();
     }
 }

@@ -3,6 +3,7 @@ package com.github.engatec.vdl.core.youtubedl;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.github.engatec.vdl.core.ApplicationContext;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +43,98 @@ public class YoutubeDlCommandBuilder {
         return this;
     }
 
+
+    /* General options */
+    public YoutubeDlCommandBuilder version() {
+        commandList.add("--version");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder update() {
+        commandList.add("-U");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder ignoreErrors() {
+        commandList.add("-i");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder ignoreConfig() {
+        commandList.add("--ignore-config");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder configLocation(String path) {
+        commandList.add("--config-location");
+        commandList.add(path);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder flatPlaylist() {
+        commandList.add("--flat-playlist");
+        return this;
+    }
+
+    /* Network options */
+    public YoutubeDlCommandBuilder proxy(String url) {
+        commandList.add("--proxy");
+        commandList.add(url);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder socketTimeout(int seconds) {
+        commandList.add("--socket-timeout");
+        commandList.add(String.valueOf(seconds));
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder sourceAddress(String ip) {
+        commandList.add("--source-address");
+        commandList.add(ip);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder forceIpV4() {
+        commandList.add("--force-ipv4");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder forceIpV6() {
+        commandList.add("--force-ipv6");
+        return this;
+    }
+
+    /* Authentication Options */
+    public YoutubeDlCommandBuilder username(String username) {
+        commandList.add("-u");
+        commandList.add(username);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder password(String password) {
+        commandList.add("-p");
+        commandList.add(password);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder twoFactor(String code) {
+        commandList.add("-2");
+        commandList.add(code);
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder useNetrc() {
+        commandList.add("--netrc");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder videoPassword(String videoPassword) {
+        commandList.add("--video-password");
+        commandList.add(videoPassword);
+        return this;
+    }
+
     public YoutubeDlCommandBuilder ffmpegLocation(String location) {
         if (StringUtils.isBlank(location)) {
             return this;
@@ -72,9 +165,7 @@ public class YoutubeDlCommandBuilder {
     }
 
     public YoutubeDlCommandBuilder outputPath(Path path, String title) {
-        if (path == null) {
-            throw new IllegalArgumentException("path must not be null");
-        }
+        Objects.requireNonNull(path, "path must not be null");
 
         title = StringUtils.length(title) > MAX_TITLE_LENGTH ? "%(id)s" : "%(title)s";
 
@@ -88,13 +179,18 @@ public class YoutubeDlCommandBuilder {
         return this;
     }
 
-    public YoutubeDlCommandBuilder update() {
-        commandList.add("-U");
+    public YoutubeDlCommandBuilder markWatched() {
+        commandList.add("--mark-watched");
         return this;
     }
 
-    public YoutubeDlCommandBuilder version() {
-        commandList.add("--version");
+    public YoutubeDlCommandBuilder noContinue() {
+        commandList.add("--no-continue");
+        return this;
+    }
+
+    public YoutubeDlCommandBuilder noPart() {
+        commandList.add("--no-part");
         return this;
     }
 
@@ -103,19 +199,10 @@ public class YoutubeDlCommandBuilder {
         return this;
     }
 
-    public YoutubeDlCommandBuilder configLocation(String path) {
-        commandList.add("--config-location");
-        commandList.add(path);
-        return this;
-    }
-
-    public YoutubeDlCommandBuilder ignoreConfig() {
-        commandList.add("--ignore-config");
-        return this;
-    }
-
-    public YoutubeDlCommandBuilder ignoreErrors() {
-        commandList.add("-i");
+    public YoutubeDlCommandBuilder cookiesFile(Path path) {
+        Objects.requireNonNull(path, "path must not be null");
+        commandList.add("--cookies");
+        commandList.add(path.toString());
         return this;
     }
 
